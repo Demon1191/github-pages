@@ -1,0 +1,100 @@
+local player = game.Players.LocalPlayer
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local Button = Instance.new("TextButton")
+Button.Size = UDim2.new(0, 200, 0, 50)
+Button.Position = UDim2.new(0.5, -100, 0.5, -25)
+Button.Text = "Start Auto-Click"
+Button.TextColor3 = Color3.new(1, 0, 0)
+Button.Font = Enum.Font.SourceSansBold
+Button.TextSize = 24
+Button.BackgroundTransparency = 1
+Button.Parent = screenGui
+
+local label = Instance.new("TextLabel")
+label.Size = UDim2.new(0, 200, 0, 25)
+label.Position = UDim2.new(0, 0, 0, 55)
+label.Text = "by: demon"
+label.TextColor3 = Color3.new(1, 0, 0)
+label.Font = Enum.Font.SourceSansBold
+label.TextSize = 18
+label.BackgroundTransparency = 1
+label.Parent = Button
+
+local frame = Instance.new("ImageLabel")
+frame.Size = Button.Size
+frame.Position = Button.Position
+frame.Image = "rbxassetid://<YOUR_IMAGE_ID>"
+frame.BackgroundTransparency = 1
+frame.Parent = screenGui
+
+Button.ZIndex = 2
+label.ZIndex = 3
+frame.ZIndex = 1
+
+local isAutoClicking = false
+local autoClicker
+
+local function autoClick()
+    while isAutoClicking do
+        local virtualUser = game:GetService("VirtualUser")
+        virtualUser:CaptureController()
+        virtualUser:ClickButton1(Vector2.new(math.random(0, 1000), math.random(0, 800)))
+        wait(0.00001)
+    end
+end
+
+local function dragify(Frame)
+    local UIS = game:GetService("UserInputService")
+    local dragging
+    local dragInput
+    local dragStart
+    local startPos
+
+    local function update(input)
+        local delta = input.Position - dragStart
+        Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+
+    Frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = Frame.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    Frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UIS.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            update(input)
+        end
+    end)
+end
+
+Button.MouseButton1Click:Connect(function()
+    if isAutoClicking then
+        isAutoClicking = false
+        Button.Text = "Start Auto-Click"
+    else
+        isAutoClicking = true
+        Button.Text = "Stop Auto-Click"
+        autoClicker = coroutine.create(autoClick)
+        coroutine.resume(autoClicker)
+    end
+end)
+
+coroutine.wrap(dragify)(Button)
+coroutine.wrap(dragify)(frame)
